@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Water Calculator · 水处理计算平台 · 高保真原型</title>
+<style>
+  :root{
+    --bg:#ffffff;--text:#37352f;--text-2:#6b6a66;--text-3:#737269;
+    --border:#ededeb;--border-2:#e4e3e0;--hover:#f3f2f0;--sidebar:#fbfbfa;
+    --blue:#2d6bff;--blue-soft:#ebf1ff;--blue-fg:#1d52e0;
+    --green:#30a46c;--violet:#9065d9;--amber:#d9870a;
+    --radius:12px;--shadow:0 1px 2px rgba(15,15,15,.05),0 8px 22px -10px rgba(15,15,15,.1);
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--sidebar);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto;padding:56px 28px 80px}
+  .brand{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+  .logo{width:40px;height:40px;border-radius:11px;background:var(--blue);display:grid;place-items:center;flex:none}
+  .logo svg{width:23px;height:23px}
+  .brand b{font-size:19px;font-weight:680;letter-spacing:-.02em}
+  .brand small{display:block;font-size:12.5px;color:var(--text-3);font-weight:400}
+  h1{font-size:30px;font-weight:720;letter-spacing:-.035em;margin-bottom:10px}
+  .lead{font-size:15px;color:var(--text-2);max-width:620px;line-height:1.7}
+  .hero{display:inline-flex;align-items:center;gap:8px;margin-top:22px;height:44px;padding:0 20px;border-radius:10px;background:var(--blue-fg);color:#fff;text-decoration:none;font-weight:600;font-size:14.5px;box-shadow:var(--shadow)}
+  .hero:hover{background:#1a47c0}
+  .hero svg{width:17px;height:17px}
+  .sec{margin-top:44px}
+  .sec h2{font-size:13px;font-weight:600;color:var(--text-3);letter-spacing:.04em;margin-bottom:14px}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+  .card{display:flex;align-items:flex-start;gap:13px;padding:18px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);text-decoration:none;color:inherit;transition:.13s}
+  .card:hover{border-color:var(--border-2);box-shadow:var(--shadow);transform:translateY(-1px)}
+  .card .ic{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;flex:none}
+  .card h3{font-size:14.5px;font-weight:620}
+  .card p{font-size:12.5px;color:var(--text-2);margin-top:3px;line-height:1.5}
+  .card .tag{display:inline-block;font-size:11px;font-weight:600;color:var(--blue-fg);background:var(--blue-soft);padding:1px 7px;border-radius:6px;margin-top:8px}
+  .full{grid-column:1/-1}
+  .foot{margin-top:48px;padding-top:22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-3);line-height:1.7}
+  @media(max-width:680px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.7c3.8 4.7 6.6 7.7 6.6 11A6.6 6.6 0 1 1 5.4 13.7C5.4 10.4 8.2 7.4 12 2.7Z" fill="#fff"/></svg></div>
+    <div><b>Water Calculator</b><small>水处理计算平台 · 高保真原型</small></div>
+  </div>
+
+  <h1>面向工程师的一体化水处理计算平台</h1>
+  <p class="lead">基于步骤（STEP）的一体化计算 + 实时模拟 + 国标参数化 + 行业经验洞察。合规、模拟、洞察三大能力统一在一份设计文档中完成，采用 Notion / Manus 极简风格。</p>
+  <a class="hero" href="Water-Calculator-PRD.html"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg>打开最新原型</a>
+
+  <div class="sec">
+    <h2>原型 · PROTOTYPE</h2>
+    <div class="grid">
+      <a class="card full" href="Water-Calculator-PRD.html">
+        <div class="ic" style="background:var(--blue-soft);color:var(--blue-fg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h11l5 5v11H4z"/><path d="M14 4v5h5"/></svg></div>
+        <div><h3>最终版原型（推荐）</h3><p>全中文 · 全可交互 · Notion 式文档工具栏（选区气泡 / 块手柄 / 全宽）· 合规·模拟·洞察 三能力 · 工作台/项目管理/模板/组件库/个人信息。</p><span class="tag">Water-Calculator-PRD.html</span></div>
+      </a>
+      <a class="card" href="Water-Calculator-Notion.html">
+        <div class="ic" style="background:#f2edfb;color:var(--violet)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18"/></svg></div>
+        <div><h3>Notion 极简版</h3><p>切换浅色极简风格的早期版本。</p></div>
+      </a>
+      <a class="card" href="Water-Calculator-Shadcn.html">
+        <div class="ic" style="background:#eaf6ef;color:var(--green)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 3 8-9"/></svg></div>
+        <div><h3>shadcn 风格版</h3><p>shadcn/ui 设计令牌 + 三栏模拟工作区。</p></div>
+      </a>
+      <a class="card" href="Water-Calculator-Doc.html">
+        <div class="ic" style="background:#fbf3e4;color:var(--amber)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h11l5 5v11H4z"/></svg></div>
+        <div><h3>统一文档式版</h3><p>首次把合规/模拟/洞察收进单一文档的版本。</p></div>
+      </a>
+      <a class="card" href="Water-Calculator-Prototype.html">
+        <div class="ic" style="background:#eef1f6;color:#4b5563"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></div>
+        <div><h3>初版（工程蓝）</h3><p>最早的四界面工程蓝版本。</p></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>文档 · DOCUMENTATION</h2>
+    <div class="grid">
+      <a class="card" href="PRD-01-Water-Calculator.md">
+        <div class="ic" style="background:var(--blue-soft);color:var(--blue-fg)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h12l4 4v12H4z"/><path d="M8 12h8M8 16h5"/></svg></div>
+        <div><h3>产品需求文档 PRD v2</h3><p>逐屏结构、交互、状态、视觉与变更记录。</p></div>
+      </a>
+      <a class="card" href="产品说明-WaterCalculator原型.md">
+        <div class="ic" style="background:#eaf6ef;color:var(--green)"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l2.5 2.5L16 8"/><circle cx="12" cy="12" r="9"/></svg></div>
+        <div><h3>产品说明（补充）</h3><p>逐屏功能、可交互元素清单、使用路径。</p></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="foot">
+    Water Calculator · 水处理计算平台高保真原型 · 个人作品集项目（2019）<br>
+    基于步骤的一体化计算 · 实时模拟 · 国标参数化 · 行业经验洞察
+  </div>
+</div>
+</body>
+</html>

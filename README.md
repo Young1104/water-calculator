@@ -1,0 +1,36 @@
+# Water Calculator · 水处理（给排水）计算平台 · 高保真原型
+
+面向工程师的一体化水处理计算平台高保真原型（HTML 单文件，可直接在浏览器打开）。核心：**基于步骤（STEP）的一体化计算 + 实时模拟 + 国标参数化 + 行业经验洞察**，合规 / 模拟 / 洞察三大能力统一在一份设计文档中完成，采用 Notion / Manus 极简风格。
+
+## 在线预览
+
+启用 GitHub Pages 后访问：`https://young1104.github.io/water-calculator/`
+（首页 `index.html` 会列出全部原型与文档。）
+
+## 内容
+
+| 文件 | 说明 |
+|---|---|
+| `index.html` | 着陆页（Pages 首页），汇总全部原型与文档 |
+| `Water-Calculator-PRD.html` | **最终版原型**：全中文、全可交互、Notion 式文档工具栏 |
+| `Water-Calculator-Notion.html` | Notion 极简版 |
+| `Water-Calculator-Shadcn.html` | shadcn/ui 风格版 |
+| `Water-Calculator-Doc.html` | 统一文档式版 |
+| `Water-Calculator-Prototype.html` | 初版（工程蓝） |
+| `PRD-01-Water-Calculator.md` | 产品需求文档 PRD v2 |
+| `01-Water-Calculator.md` | 项目背景介绍 |
+| `产品说明-WaterCalculator原型.md` | 产品说明（补充） |
+
+## 主要功能（最终版原型）
+
+- **工作台**：问候、指标、进行中项目（卡片/列表）、执行中程序、消息、临近节点、效率看板、新建项目模板弹窗。
+- **设计文档（三栏）**：进度面板（大纲锚定）+ 显示面板（文档）+ 管网流量图（实时模拟）。
+- **三大能力（行内标注）**：国标关键词就地展开计算（越界报警 + 溯源）、核心错误一键修复（连带依赖）、行业洞察设备推荐（3D/CAD/标签/根因）。
+- **Notion 式编辑**：选区气泡工具栏、块悬停 `＋/⋮⋮` 手柄、`/` 命令提示、全宽切换、历史版本、收藏、更多菜单。
+
+## 本地运行
+
+直接双击任意 `.html` 文件用浏览器打开即可，无需构建或联网。
+
+---
+个人作品集项目（2019）· 仅用于设计演示。

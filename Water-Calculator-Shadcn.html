@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Water Calculator · 水处理计算平台 · 优化版原型</title>
+<style>
+  /* ===== shadcn/ui (zinc) design tokens ===== */
+  :root{
+    --background:#ffffff;
+    --foreground:#09090b;
+    --card:#ffffff;
+    --muted:#f4f4f5;
+    --muted-2:#fafafa;
+    --muted-foreground:#71717a;
+    --subtle-foreground:#a1a1aa;
+    --border:#e4e4e7;
+    --border-strong:#d4d4d8;
+    --input:#e4e4e7;
+    --primary:#18181b;
+    --primary-hover:#27272a;
+    --primary-foreground:#fafafa;
+    --ring:#a1a1aa;
+    --accent:#f4f4f5;
+    /* data accents (restrained) */
+    --blue:#2563eb; --blue-soft:#eff4ff; --blue-fg:#1d4ed8;
+    --green:#16a34a; --green-soft:#f0fdf4; --green-fg:#15803d;
+    --amber:#d97706; --amber-soft:#fffbeb; --amber-fg:#b45309;
+    --red:#dc2626; --red-soft:#fef2f2; --red-fg:#b91c1c;
+    --violet:#7c3aed; --violet-soft:#f5f3ff; --violet-fg:#6d28d9;
+    --radius:10px; --radius-sm:7px; --radius-lg:14px;
+    --shadow-xs:0 1px 2px rgba(9,9,11,.05);
+    --shadow-sm:0 1px 2px rgba(9,9,11,.06),0 1px 1px rgba(9,9,11,.04);
+    --shadow:0 1px 3px rgba(9,9,11,.07),0 8px 24px -12px rgba(9,9,11,.12);
+    --shadow-card:0 0 0 1px rgba(9,9,11,.02),0 2px 4px rgba(9,9,11,.04);
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{font-family:var(--sans);background:var(--muted-2);color:var(--foreground);font-size:13px;line-height:1.5;-webkit-font-smoothing:antialiased;letter-spacing:-.01em}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:#e4e4e7;border-radius:8px;border:3px solid transparent;background-clip:content-box}
+  ::-webkit-scrollbar-thumb:hover{background:#d4d4d8;background-clip:content-box}
+  ::-webkit-scrollbar-track{background:transparent}
+  svg{display:block}
+
+  /* ===== App shell ===== */
+  .app{display:grid;grid-template-columns:248px 1fr;height:100vh;background:var(--background)}
+  .sidebar{border-right:1px solid var(--border);background:var(--background);display:flex;flex-direction:column;padding:14px 12px}
+  .brand{display:flex;align-items:center;gap:10px;padding:8px 8px 16px}
+  .brand .logo{width:30px;height:30px;border-radius:9px;background:var(--primary);display:grid;place-items:center;flex:none}
+  .brand .logo svg{width:17px;height:17px}
+  .brand b{font-size:14.5px;font-weight:600;letter-spacing:-.02em}
+  .brand small{display:block;font-size:11px;color:var(--muted-foreground);font-weight:400;letter-spacing:0}
+
+  .nav{display:flex;flex-direction:column;gap:2px;margin-top:4px}
+  .nav-label{font-size:11px;font-weight:500;color:var(--subtle-foreground);padding:14px 10px 6px;letter-spacing:.02em}
+  .nav a{display:flex;align-items:center;gap:11px;padding:8px 10px;border-radius:var(--radius-sm);color:var(--muted-foreground);
+        cursor:pointer;font-size:13.5px;font-weight:450;text-decoration:none;transition:.12s;border:1px solid transparent}
+  .nav a svg{width:17px;height:17px;flex:none;stroke-width:1.7}
+  .nav a:hover{background:var(--accent);color:var(--foreground)}
+  .nav a.active{background:var(--background);color:var(--foreground);font-weight:550;border-color:var(--border);box-shadow:var(--shadow-sm)}
+  .nav a .badge{margin-left:auto;background:var(--muted);color:var(--muted-foreground);font-size:11px;padding:1px 7px;border-radius:7px;font-weight:600}
+  .nav a.active .badge{background:var(--primary);color:#fff}
+  .sidebar-foot{margin-top:auto;padding:12px;border:1px solid var(--border);border-radius:var(--radius);background:var(--muted-2)}
+  .sidebar-foot .row{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:550}
+  .sidebar-foot .lvl{height:6px;border-radius:4px;background:var(--muted);margin-top:9px;overflow:hidden}
+  .sidebar-foot .lvl i{display:block;height:100%;width:64%;background:var(--primary);border-radius:4px}
+  .sidebar-foot p{font-size:11px;color:var(--muted-foreground);margin-top:7px}
+
+  .main{display:flex;flex-direction:column;overflow:hidden}
+  .topbar{height:60px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:14px;padding:0 26px;flex:none;background:var(--background)}
+  .search{display:flex;align-items:center;gap:9px;background:var(--background);border:1px solid var(--border);border-radius:999px;padding:8px 16px;width:380px;color:var(--subtle-foreground);transition:.12s}
+  .search:focus-within{border-color:var(--border-strong);box-shadow:0 0 0 4px rgba(9,9,11,.04)}
+  .search input{border:0;background:transparent;outline:0;font-size:13px;color:var(--foreground);width:100%}
+  .topbar .spacer{flex:1}
+  .iconbtn{width:36px;height:36px;border-radius:999px;display:grid;place-items:center;color:var(--muted-foreground);cursor:pointer;position:relative;transition:.12s}
+  .iconbtn:hover{background:var(--accent);color:var(--foreground)}
+  .iconbtn .dot{position:absolute;top:7px;right:8px;width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid #fff}
+  .avatar{width:34px;height:34px;border-radius:999px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:12.5px;font-weight:600;flex:none}
+
+  .scroll{overflow:auto;flex:1}
+  .screen{display:none;padding:28px 32px 48px;max-width:1280px;animation:fade .28s ease}
+  .screen.wide{max-width:none;padding:0;height:calc(100vh - 60px)}
+  .screen.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+
+  /* ===== primitives ===== */
+  .h1{font-size:22px;font-weight:650;letter-spacing:-.025em}
+  .sub{color:var(--muted-foreground);font-size:13.5px;margin-top:4px}
+  .page-head{display:flex;align-items:flex-start;gap:16px;margin-bottom:24px}
+  .page-head .spacer{flex:1}
+  .btn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:550;
+       cursor:pointer;border:1px solid var(--border);background:var(--background);color:var(--foreground);transition:.12s;white-space:nowrap}
+  .btn:hover{background:var(--accent)}
+  .btn svg{width:15px;height:15px;stroke-width:2}
+  .btn.primary{background:var(--primary);border-color:var(--primary);color:var(--primary-foreground)}
+  .btn.primary:hover{background:var(--primary-hover)}
+  .btn.sm{height:30px;padding:0 11px;font-size:12.5px;border-radius:999px}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--muted-foreground)}
+  .btn.ghost:hover{background:var(--accent);color:var(--foreground)}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-card)}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:550;padding:2px 9px;border-radius:7px;line-height:1.6;border:1px solid transparent}
+  .badge.secondary{background:var(--muted);color:var(--muted-foreground)}
+  .badge.blue{background:var(--blue-soft);color:var(--blue-fg)}
+  .badge.green{background:var(--green-soft);color:var(--green-fg)}
+  .badge.amber{background:var(--amber-soft);color:var(--amber-fg)}
+  .badge.red{background:var(--red-soft);color:var(--red-fg)}
+  .badge.violet{background:var(--violet-soft);color:var(--violet-fg)}
+  .badge.outline{background:transparent;border-color:var(--border);color:var(--muted-foreground)}
+  .stat{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:550}
+  .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex:none}
+
+  /* segmented tabs (Sterling black-pill style) */
+  .tabs{display:inline-flex;background:var(--muted);border-radius:999px;padding:4px;gap:2px}
+  .tabs button{border:0;background:transparent;height:30px;padding:0 16px;border-radius:999px;font-size:12.5px;font-weight:550;color:var(--muted-foreground);cursor:pointer;transition:.12s}
+  .tabs button:hover{color:var(--foreground)}
+  .tabs button.on{background:var(--primary);color:#fff}
+  .seg{display:inline-flex;background:var(--muted);border-radius:var(--radius-sm);padding:3px}
+  .seg button{border:0;background:transparent;height:28px;padding:0 13px;border-radius:6px;font-size:12.5px;font-weight:550;color:var(--muted-foreground);cursor:pointer}
+  .seg button.on{background:#fff;color:var(--foreground);box-shadow:var(--shadow-xs)}
+
+  /* ===== KPI cards ===== */
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+  .kpi{padding:20px}
+  .kpi .top{display:flex;align-items:center;gap:9px;color:var(--muted-foreground);font-size:13px;font-weight:500}
+  .kpi .top .ic{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;flex:none}
+  .kpi .num{font-size:30px;font-weight:680;letter-spacing:-.04em;margin-top:16px;line-height:1}
+  .kpi .num small{font-size:15px;font-weight:600;color:var(--subtle-foreground)}
+  .kpi .delta{margin-top:11px;font-size:12.5px;display:flex;align-items:center;gap:5px;color:var(--muted-foreground)}
+  .up{color:var(--green)} .down{color:var(--red)}
+
+  /* ===== two col ===== */
+  .grid-2{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+  .section-h{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+  .section-h h2{font-size:16px;font-weight:620;letter-spacing:-.02em}
+  .section-h .spacer{flex:1}
+
+  /* deadline cards */
+  .dl-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .dl{padding:18px;transition:.14s;cursor:pointer}
+  .dl:hover{box-shadow:var(--shadow);border-color:var(--border-strong)}
+  .dl .cid{font-size:11.5px;color:var(--subtle-foreground);font-family:var(--mono);display:flex;align-items:center}
+  .dl .cid .more{margin-left:auto;color:var(--subtle-foreground);cursor:pointer}
+  .dl h3{font-size:15px;font-weight:600;margin:9px 0 11px;letter-spacing:-.02em}
+  .dl .kv{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0}
+  .dl .kv .k{color:var(--muted-foreground)}
+  .dl .kv .v{font-weight:550}
+  .dl .kvs{margin-top:9px;padding-top:11px;border-top:1px solid var(--border)}
+
+  /* activity feed */
+  .panel{padding:18px 20px}
+  .feed{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+  .feed:last-child{border-bottom:0}
+  .feed .fic{width:34px;height:34px;border-radius:8px;flex:none;display:grid;place-items:center}
+  .feed .t{font-size:13px;line-height:1.5}
+  .feed .t b{font-weight:600}
+  .feed .t .m{font-size:11.5px;color:var(--subtle-foreground);margin-top:3px}
+  .av{border-radius:999px;display:grid;place-items:center;color:#fff;font-weight:600;flex:none}
+
+  /* ===== table ===== */
+  .table-wrap{overflow:hidden}
+  .t-toolbar{display:flex;align-items:center;gap:12px;padding:16px 20px}
+  table{width:100%;border-collapse:collapse}
+  thead th{text-align:left;font-size:12px;font-weight:500;color:var(--muted-foreground);padding:11px 20px;background:var(--muted-2);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+  tbody td{padding:13px 20px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+  tbody tr:last-child td{border-bottom:0}
+  tbody tr:hover{background:var(--muted-2)}
+  .radio{width:16px;height:16px;border:1.5px solid var(--border-strong);border-radius:50%;display:inline-block;vertical-align:middle}
+  .cell-id{font-family:var(--mono);font-size:12.5px;color:var(--muted-foreground);display:flex;align-items:center;gap:11px}
+  .cell-user{display:flex;align-items:center;gap:9px}
+  .cell-user .av{width:28px;height:28px;font-size:11px}
+  .cell-user img{width:28px;height:28px;border-radius:999px;object-fit:cover}
+
+  /* ===== compliance doc ===== */
+  .doc{padding:30px 36px;line-height:2;font-size:14px;color:var(--foreground)}
+  .doc h2{font-size:16px;font-weight:620;margin:2px 0 16px;display:flex;align-items:center;gap:10px;letter-spacing:-.02em}
+  .doc h2 .n{background:var(--primary);color:#fff;width:24px;height:24px;border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:600}
+  .doc p{margin:12px 0;color:#3f3f46}
+  .term{color:var(--blue-fg);background:var(--blue-soft);border-bottom:1.5px solid #bfd3fb;padding:1px 4px;border-radius:5px;cursor:pointer;font-weight:550;white-space:nowrap;transition:.1s}
+  .term:hover{background:#dde9fd}
+  .term.open{background:var(--primary);color:#fff;border-bottom-color:transparent}
+  .term::after{content:"";display:inline-block;width:9px;height:9px;margin-left:4px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:rotate(45deg) translateY(-2px);opacity:.6}
+  .inline-calc{margin:14px 0;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);animation:pop .2s ease;background:#fff}
+  @keyframes pop{from{opacity:0;transform:scale(.99) translateY(3px)}to{opacity:1;transform:none}}
+  .ic-head{padding:13px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--muted-2)}
+  .ic-head .tg{font-size:13.5px;font-weight:620}
+  .ic-head .src{margin-left:auto;font-size:12px;color:var(--muted-foreground);display:flex;align-items:center;gap:6px;cursor:pointer;font-family:var(--mono)}
+  .ic-head .src:hover{color:var(--blue-fg)}
+  .ic-body{padding:16px}
+  .def{font-size:12.5px;color:#52525b;background:var(--muted-2);border-left:2px solid var(--blue);padding:11px 13px;border-radius:0 8px 8px 0;margin-bottom:14px;line-height:1.65}
+  .calc-line{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;padding:7px 0}
+  .calc-line label{font-size:13px;color:#3f3f46}
+  .calc-line .field{display:flex;align-items:center;gap:7px}
+  .calc-line input{width:96px;border:1px solid var(--input);border-radius:var(--radius-sm);padding:7px 10px;font-size:13px;font-family:var(--mono);text-align:right;color:var(--foreground);outline:0;background:#fff}
+  .calc-line input:focus{border-color:var(--ring);box-shadow:0 0 0 3px rgba(9,9,11,.05)}
+  .calc-line .unit{font-size:12px;color:var(--subtle-foreground);width:42px}
+  .range-hint{font-size:12px;margin-top:9px;display:flex;align-items:center;gap:7px;padding:8px 12px;border-radius:var(--radius-sm);font-weight:500}
+  .range-hint.ok{background:var(--green-soft);color:var(--green-fg)}
+  .range-hint.over{background:var(--amber-soft);color:var(--amber-fg)}
+  .result-box{margin-top:14px;background:var(--primary);color:#fff;border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center}
+  .result-box .rl{font-size:12px;opacity:.7}
+  .result-box .rv{font-size:22px;font-weight:680;font-family:var(--mono);letter-spacing:-.02em;margin-top:2px}
+  .result-box .ok{margin-left:auto;font-size:12px;background:rgba(255,255,255,.14);padding:5px 11px;border-radius:999px;display:flex;align-items:center;gap:6px;font-weight:550}
+
+  .list-card{overflow:hidden}
+  .list-card .lh{padding:15px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;font-size:13.5px;font-weight:600}
+  .li{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;gap:12px;cursor:pointer}
+  .li:last-child{border-bottom:0}
+  .li:hover{background:var(--muted-2)}
+  .li .code{font-family:var(--mono);font-size:11px;color:var(--blue-fg);background:var(--blue-soft);padding:2px 8px;border-radius:6px;flex:none;height:fit-content;font-weight:600}
+  .li .ti{font-size:13px;font-weight:550}
+  .li .de{font-size:12px;color:var(--muted-foreground);margin-top:3px;line-height:1.5}
+  .constraint{display:flex;align-items:center;gap:11px;padding:12px 18px;border-bottom:1px solid var(--border)}
+  .constraint:last-child{border-bottom:0}
+  .constraint .ck{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;flex:none;color:#fff;font-size:11px;font-weight:700}
+  .constraint .ct{font-size:12.5px}
+  .constraint .cv{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted-foreground);font-weight:550}
+
+  /* ===== simulation 3-panel ===== */
+  .sim-wrap{display:grid;grid-template-columns:264px 1fr 380px;height:100%;overflow:hidden}
+  .pnl{overflow:auto;display:flex;flex-direction:column;background:var(--background)}
+  .pnl.prog{border-right:1px solid var(--border)}
+  .pnl.disp{background:var(--muted-2)}
+  .pnl.sim{border-left:1px solid var(--border);background:#0b0e14;color:#e4e7ec}
+  .pnl-h{padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:9px;position:sticky;top:0;background:var(--background);z-index:3}
+  .pnl.disp .pnl-h{background:var(--muted-2)}
+  .pnl.sim .pnl-h{background:#0b0e14;border-color:#1d212b}
+  .pnl-h .pt{font-size:12.5px;font-weight:620}
+  .pnl-h .pt small{display:block;font-size:10.5px;color:var(--subtle-foreground);font-weight:500;letter-spacing:.06em;margin-top:1px}
+  .pnl.sim .pnl-h .pt small{color:#71798a}
+
+  .steps{padding:10px 8px}
+  .step{display:flex;align-items:center;gap:11px;padding:9px 11px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;color:var(--muted-foreground);position:relative}
+  .step:hover{background:var(--accent)}
+  .step.active{background:var(--accent);color:var(--foreground);font-weight:550}
+  .step .si{width:22px;height:22px;border-radius:999px;flex:none;display:grid;place-items:center;font-size:11px;font-weight:600;border:1.5px solid var(--border-strong);color:var(--muted-foreground)}
+  .step.done .si{background:var(--green);border-color:var(--green);color:#fff}
+  .step.active .si{background:var(--primary);border-color:var(--primary);color:#fff}
+  .step.err .si{background:var(--red);border-color:var(--red);color:#fff}
+  .step .sx{flex:1}
+  .step .err-tag{font-size:10px;color:var(--red-fg);background:var(--red-soft);padding:1px 6px;border-radius:6px;font-weight:600}
+  .substep{display:flex;align-items:center;gap:9px;padding:7px 11px 7px 42px;font-size:12.5px;color:var(--muted-foreground);cursor:pointer;border-radius:var(--radius-sm)}
+  .substep:hover{background:var(--accent)}
+  .substep .d{width:6px;height:6px;border-radius:50%;background:var(--border-strong);flex:none}
+  .substep.done .d{background:var(--green)}
+  .substep.err{color:var(--red-fg)} .substep.err .d{background:var(--red)}
+
+  .disp-body{padding:22px 24px}
+  .calc-card{padding:22px}
+  .cc-h{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+  .cc-h .n{width:30px;height:30px;border-radius:8px;background:var(--primary);color:#fff;display:grid;place-items:center;font-weight:600;font-size:13px;flex:none}
+  .cc-h h3{font-size:16px;font-weight:620;letter-spacing:-.02em}
+  .cc-h .formula{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted-foreground);background:var(--muted);padding:6px 11px;border-radius:7px}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 24px}
+  .fg{display:flex;flex-direction:column;gap:7px}
+  .fg label{font-size:12.5px;font-weight:500;display:flex;align-items:center;gap:6px}
+  .fg label .req{color:var(--red)}
+  .ipt{display:flex;align-items:center;border:1px solid var(--input);border-radius:var(--radius-sm);background:#fff;overflow:hidden;transition:.12s;height:38px}
+  .ipt:focus-within{border-color:var(--ring);box-shadow:0 0 0 3px rgba(9,9,11,.05)}
+  .ipt input{border:0;outline:0;padding:0 12px;font-size:14px;font-family:var(--mono);width:100%;background:transparent;height:100%}
+  .ipt .u{padding:0 12px;font-size:11.5px;color:var(--subtle-foreground);border-left:1px solid var(--border);height:100%;display:flex;align-items:center;background:var(--muted-2)}
+  .fg.linked .ipt{background:var(--blue-soft);border-color:#bfd3fb}
+  .fg.linked label{color:var(--blue-fg)}
+  .fg.err .ipt{border-color:var(--red);background:var(--red-soft)}
+  .fg .note{font-size:11px;color:var(--subtle-foreground)}
+  .fg.err .note{color:var(--red-fg)}
+  .slider-row input[type=range]{width:100%;accent-color:var(--primary);margin-top:8px}
+  .sld-marks{display:flex;justify-content:space-between;font-size:11px;color:var(--subtle-foreground);font-family:var(--mono);margin-top:4px}
+
+  .dep-alert{display:flex;align-items:center;gap:14px;padding:15px 18px;background:var(--red-soft);border:1px solid #f6cdcd;border-radius:var(--radius);margin-bottom:18px}
+  .dep-alert .ai{width:38px;height:38px;border-radius:9px;background:var(--red);color:#fff;display:grid;place-items:center;flex:none}
+  .dep-alert .at b{font-size:13.5px;color:var(--red-fg);font-weight:600}
+  .dep-alert .at p{font-size:12px;color:#c2575a;margin-top:3px;line-height:1.5}
+  .dep-alert .btn{margin-left:auto;background:var(--red);border-color:var(--red);color:#fff}
+  .dep-alert .btn:hover{background:#c11f1f}
+  .dep-graph{padding:18px}
+  .dep-graph .dh{font-size:13px;font-weight:600;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+  .mini-flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+  .mini-flow .node{font-size:11.5px;padding:7px 11px;border-radius:7px;border:1px solid var(--border);background:#fff;font-weight:550;white-space:nowrap}
+  .mini-flow .node.cur{background:var(--primary);color:#fff;border-color:var(--primary)}
+  .mini-flow .node.err{background:var(--red-soft);color:var(--red-fg);border-color:#f6cdcd}
+  .mini-flow .arr{color:var(--subtle-foreground);margin:0 3px}
+  .mini-flow .arr.bad{color:var(--red)}
+
+  /* simulation panel (dark) */
+  .sim-body{padding:18px}
+  .sim-stat{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:16px}
+  .sim-stat .s{background:#12161f;border:1px solid #1d212b;border-radius:var(--radius);padding:13px 14px}
+  .sim-stat .s .l{font-size:11px;color:#8b94a7}
+  .sim-stat .s .v{font-size:19px;font-weight:680;margin-top:5px;font-family:var(--mono);letter-spacing:-.02em;color:#fff}
+  .sim-stat .s .v small{font-size:11px;color:#71798a;font-family:var(--sans)}
+  .sim-stat .s.good{border-color:#1f5138} .sim-stat .s.good .v{color:#4ade80}
+  .sim-stat .s.bad{border-color:#5c2626} .sim-stat .s.bad .v{color:#f87171}
+  .sim-sec{margin-bottom:18px}
+  .sim-sec .ssh{font-size:12px;font-weight:600;color:#c8cedb;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .sim-sec .ssh .live{margin-left:auto;font-size:10.5px;color:#4ade80;display:flex;align-items:center;gap:5px;font-weight:600}
+  .sim-sec .ssh .live .pulse{width:6px;height:6px;border-radius:50%;background:#4ade80;animation:pulse 1.4s infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.25}}
+  .viz{background:#12161f;border:1px solid #1d212b;border-radius:var(--radius);padding:14px;overflow:hidden}
+  .viz.grid4{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .viz .qi{text-align:center}
+  .viz .qi .ql{font-size:10.5px;color:#8b94a7}
+  .viz .qi .qv{font-size:16px;font-weight:680;font-family:var(--mono);margin-top:3px}
+
+  /* ===== insight ===== */
+  .insight{padding:20px}
+  .ins-h{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+  .ins-h .ai{width:40px;height:40px;border-radius:10px;display:grid;place-items:center;color:#fff;flex:none}
+  .ins-h h3{font-size:15px;font-weight:620;letter-spacing:-.02em}
+  .ins-h .s2{font-size:12px;color:var(--muted-foreground);margin-top:2px}
+  .ins-h .pct{margin-left:auto;text-align:right}
+  .ins-h .pct b{font-size:22px;font-weight:700;color:var(--red);letter-spacing:-.03em}
+  .ins-h .pct span{font-size:11px;color:var(--subtle-foreground);display:block}
+  .ins-body{font-size:13px;color:#52525b;line-height:1.65}
+  .reasons{margin-top:16px;display:flex;flex-direction:column;gap:9px}
+  .reason{display:flex;align-items:center;gap:12px}
+  .reason .barwrap{flex:1;height:26px;background:var(--muted);border-radius:7px;overflow:hidden;position:relative}
+  .reason .barwrap i{display:block;height:100%;border-radius:7px;background:var(--primary);opacity:.88}
+  .reason .barwrap span{position:absolute;left:11px;top:0;line-height:26px;font-size:12px;font-weight:500;z-index:2;color:var(--foreground)}
+  .reason .pn{font-size:12px;font-family:var(--mono);color:var(--muted-foreground);width:42px;text-align:right;font-weight:600}
+
+  .expert{display:flex;gap:13px;padding:16px 0;border-bottom:1px solid var(--border)}
+  .expert:last-child{border-bottom:0}
+  .expert .av{width:40px;height:40px;border-radius:10px;font-size:14px}
+  .expert .nm{font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .expert .nm .v{color:var(--blue)}
+  .expert .ro{font-size:11.5px;color:var(--subtle-foreground);margin-bottom:8px}
+  .expert .qt{font-size:13px;color:#3f3f46;line-height:1.6;background:var(--muted-2);border-radius:0 10px 10px 10px;padding:11px 14px;border-left:2px solid var(--blue)}
+  .expert .meta{display:flex;align-items:center;gap:16px;margin-top:9px;font-size:11.5px;color:var(--subtle-foreground)}
+  .expert .meta span{display:flex;align-items:center;gap:5px;cursor:pointer}
+  .expert .meta span:hover{color:var(--blue-fg)}
+
+  .ai-rec{padding:20px;background:var(--primary);color:#e4e4e7}
+  .ai-rec h4{color:#fff;font-size:14px;font-weight:620;display:flex;align-items:center;gap:9px;margin-bottom:5px}
+  .ai-rec h4 .sp{margin-left:auto;font-size:10.5px;background:rgba(255,255,255,.12);padding:3px 9px;border-radius:999px;color:#d4d4d8;font-weight:500}
+  .ai-rec .ad{font-size:12px;color:#a1a1aa;margin-bottom:15px}
+  .ai-item{display:flex;gap:12px;padding:13px;background:rgba(255,255,255,.05);border-radius:var(--radius);margin-bottom:10px;cursor:pointer;transition:.12s;border:1px solid rgba(255,255,255,.06)}
+  .ai-item:hover{background:rgba(255,255,255,.09)}
+  .ai-item .ic{width:32px;height:32px;border-radius:8px;background:rgba(255,255,255,.08);display:grid;place-items:center;flex:none;color:#93b4fb}
+  .ai-item .tt{font-size:12.5px;color:#fff;font-weight:550}
+  .ai-item .dd{font-size:11.5px;color:#a1a1aa;margin-top:3px;line-height:1.5}
+  .ai-item .conf{margin-left:auto;font-size:10.5px;color:#86efac;align-self:center;white-space:nowrap;font-family:var(--mono)}
+
+  .timeline{padding:2px 0}
+  .tl-item{display:flex;gap:13px;position:relative;padding-bottom:18px}
+  .tl-item::before{content:"";position:absolute;left:14px;top:30px;bottom:-2px;width:1.5px;background:var(--border)}
+  .tl-item:last-child::before{display:none}
+  .tl-item .tdot{width:30px;height:30px;border-radius:999px;flex:none;display:grid;place-items:center;color:#fff;font-size:11px;font-weight:600;z-index:2}
+  .tl-item .ti2{font-size:13px;font-weight:600}
+  .tl-item .rs{font-size:12px;color:#52525b;background:var(--muted-2);border:1px solid var(--border);border-radius:9px;padding:9px 12px;margin-top:7px;line-height:1.55}
+  .tl-item .tm{font-size:11px;color:var(--subtle-foreground);margin-top:5px}
+
+  .footer-note{text-align:center;color:var(--subtle-foreground);font-size:11.5px;padding:28px 0 10px}
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- ===== Sidebar ===== -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" fill="none"><path d="M12 2.7c3.8 4.7 6.6 7.7 6.6 11A6.6 6.6 0 1 1 5.4 13.7C5.4 10.4 8.2 7.4 12 2.7Z" fill="#fff"/></svg></div>
+      <div><b>Water Calculator</b><small>水处理计算平台</small></div>
+    </div>
+    <nav class="nav">
+      <a class="active" data-screen="ws" onclick="go('ws',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+        工作台
+      </a>
+      <div class="nav-label">当前项目</div>
+      <a data-screen="comp" onclick="go('comp',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 11l2.5 2.5L16 8"/><path d="M5 4h14a1 1 0 0 1 1 1v15l-4-2-4 2-4-2-4 2V5a1 1 0 0 1 1-1Z"/></svg>
+        合规管理
+      </a>
+      <a data-screen="sim" onclick="go('sim',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 17l5-5 4 3 8-9"/><path d="M3 21h18"/></svg>
+        实时模拟<span class="badge">3</span>
+      </a>
+      <a data-screen="ins" onclick="go('ins',this)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 .9-1 1.5H9c0-.6-.3-.9-1-1.5A6 6 0 0 1 12 3Z"/></svg>
+        行业洞察
+      </a>
+      <div class="nav-label">工具</div>
+      <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4h16v4H4z"/><path d="M4 12h10v8H4z"/><path d="M18 12h2v8h-2z"/></svg>管网设计</a>
+      <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>计算历史</a>
+      <a><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7l8-4 8 4-8 4-8-4Z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>方案比选</a>
+    </nav>
+    <div class="sidebar-foot">
+      <div class="row"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 .9-1 1.5H9c0-.6-.3-.9-1-1.5A6 6 0 0 1 12 3Z"/></svg>新人成长<span style="margin-left:auto;color:var(--blue-fg);font-weight:600">Lv.3</span></div>
+      <div class="lvl"><i></i></div>
+      <p>已掌握 16 个工程经验点</p>
+    </div>
+  </aside>
+
+  <!-- ===== Main ===== -->
+  <div class="main">
+    <header class="topbar">
+      <div class="search">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg>
+        <input placeholder="搜索国标 / 工艺 / 参数 / 项目…"/>
+      </div>
+      <div class="spacer"></div>
+      <div class="iconbtn"><span class="dot"></span><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></div>
+      <div class="iconbtn"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9.4 4.6a2 2 0 0 1 5.2 0l.3 1a8 8 0 0 1 1.6.9l1-.3a2 2 0 0 1 2.6 1l-.4 1a8 8 0 0 1 0 1.8l.4 1a2 2 0 0 1-2.6 1l-1-.3a8 8 0 0 1-1.6.9l-.3 1a2 2 0 0 1-5.2 0l-.3-1a8 8 0 0 1-1.6-.9l-1 .3a2 2 0 0 1-2.6-1l.4-1a8 8 0 0 1 0-1.8l-.4-1a2 2 0 0 1 2.6-1l1 .3a8 8 0 0 1 1.6-.9Z"/><circle cx="12" cy="12" r="2.6"/></svg></div>
+      <div class="avatar">徐</div>
+    </header>
+
+    <div class="scroll">
+
+      <!-- ============ 工作台 ============ -->
+      <section class="screen active" id="screen-ws">
+        <div class="page-head">
+          <div>
+            <div class="h1">工作台</div>
+            <div class="sub">概览你所在事务的当前活动。</div>
+          </div>
+          <div class="spacer"></div>
+          <div class="seg"><button class="on">卡片</button><button>列表</button></div>
+          <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>新建项目</button>
+        </div>
+
+        <div class="kpis">
+          <div class="card kpi">
+            <div class="top"><span class="ic" style="background:var(--blue-soft);color:var(--blue-fg)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg></span>进行中项目</div>
+            <div class="num">12</div>
+            <div class="delta"><span class="up stat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 14l5-5 5 5"/></svg>+12%</span>较上月</div>
+          </div>
+          <div class="card kpi">
+            <div class="top"><span class="ic" style="background:var(--amber-soft);color:var(--amber-fg)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>临近节点</div>
+            <div class="num">11</div>
+            <div class="delta">未来 7 天内</div>
+          </div>
+          <div class="card kpi">
+            <div class="top"><span class="ic" style="background:var(--green-soft);color:var(--green-fg)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M20 6 9 17l-5-5"/></svg></span>合规通过率</div>
+            <div class="num">94<small>%</small></div>
+            <div class="delta"><span class="up stat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 14l5-5 5 5"/></svg>+8%</span>较上月</div>
+          </div>
+          <div class="card kpi">
+            <div class="top"><span class="ic" style="background:var(--violet-soft);color:var(--violet-fg)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M3 17l5-5 4 3 8-9"/></svg></span>本月迭代</div>
+            <div class="num">128<small>次</small></div>
+            <div class="delta"><span class="down stat"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M7 10l5 5 5-5"/></svg>纠错 -42%</span></div>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <div class="section-h"><h2>临近节点</h2><div class="spacer"></div><button class="btn sm ghost">查看全部</button></div>
+            <div class="dl-grid">
+              <div class="card dl">
+                <div class="cid">项目 ID · #23980<span class="more"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+                <h3>需氧量与曝气核算</h3>
+                <span class="badge red"><span class="dot"></span>高优先级</span>
+                <div class="kvs">
+                  <div class="kv"><span class="k">项目</span><span class="v">城市污水厂 A²/O</span></div>
+                  <div class="kv"><span class="k">评审日期</span><span class="v">2026-01-16</span></div>
+                  <div class="kv"><span class="k">负责人</span><span class="v">徐书洋</span></div>
+                </div>
+              </div>
+              <div class="card dl">
+                <div class="cid">项目 ID · #23981<span class="more"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></svg></span></div>
+                <h3>膜通量校核 · MBR</h3>
+                <span class="badge green"><span class="dot"></span>低优先级</span>
+                <div class="kvs">
+                  <div class="kv"><span class="k">项目</span><span class="v">园区中水回用</span></div>
+                  <div class="kv"><span class="k">评审日期</span><span class="v">2026-01-12</span></div>
+                  <div class="kv"><span class="k">负责人</span><span class="v">林知远</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card panel" style="margin-top:20px">
+              <div class="section-h" style="margin-bottom:6px"><h2>动态</h2><div class="spacer"></div><button class="btn sm ghost">全部</button></div>
+              <div class="feed">
+                <div class="fic av" style="background:var(--red);width:34px;height:34px">!</div>
+                <div class="t"><b>合规约束触发</b> · A²/O 项目「污泥回流比」超出国标取值范围 50–100%，当前 115%，需复核。<div class="m">5 分钟前 · 系统</div></div>
+              </div>
+              <div class="feed">
+                <div class="fic" style="background:var(--blue-soft);color:var(--blue-fg)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h16v12H5.2L4 17.2V4Z"/></svg></div>
+                <div class="t"><b>林知远</b> 完成了 MBR 项目的「膜通量校核」并请你评审。<div class="m">42 分钟前</div></div>
+              </div>
+              <div class="feed">
+                <div class="fic" style="background:var(--violet-soft);color:var(--violet-fg)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 .9-1 1.5H9c0-.6-.3-.9-1-1.5A6 6 0 0 1 12 3Z"/></svg></div>
+                <div class="t"><b>行业洞察</b> · 相似项目中 63% 因「未考虑冬季水温」导致脱氮不达标，建议复核。<div class="m">1 小时前</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- side -->
+          <div>
+            <div class="card panel" style="margin-bottom:20px">
+              <div class="section-h" style="margin-bottom:6px"><h2 style="font-size:14.5px">队友进度</h2><div class="spacer"></div><button class="btn sm ghost">团队</button></div>
+              <div class="feed" style="border:0;padding:11px 0"><div class="av" style="width:34px;height:34px;font-size:12px;background:#16a34a">林</div><div style="flex:1"><div style="font-size:13px;font-weight:550">林知远 · 工艺工程师</div><div style="font-size:11.5px;color:var(--subtle-foreground)">MBR 膜校核</div></div><span class="badge secondary">86%</span></div>
+              <div class="feed" style="border:0;padding:11px 0"><div class="av" style="width:34px;height:34px;font-size:12px;background:#d97706">王</div><div style="flex:1"><div style="font-size:13px;font-weight:550">王砚 · 管网工程师</div><div style="font-size:11.5px;color:var(--subtle-foreground)">雨污分流设计</div></div><span class="badge amber">27%</span></div>
+              <div class="feed" style="border:0;padding:11px 0"><div class="av" style="width:34px;height:34px;font-size:12px;background:#7c3aed">赵</div><div style="flex:1"><div style="font-size:13px;font-weight:550">赵岚 · 资深审核</div><div style="font-size:11.5px;color:var(--subtle-foreground)">方案比选</div></div><span class="badge secondary">64%</span></div>
+            </div>
+
+            <div class="card panel">
+              <div class="section-h" style="margin-bottom:12px"><h2 style="font-size:14.5px">效率看板</h2></div>
+              <div class="kv" style="display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted-foreground)">软件切换</span><span class="stat up">1 个平台 ↓</span></div>
+              <div class="kv" style="display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted-foreground)">手工录入（基线 388 次）</span><span class="stat up">↓ 83%</span></div>
+              <div class="kv" style="display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0"><span style="color:var(--muted-foreground)">中间文件数</span><span class="stat up">27 → 1</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 项目表 -->
+        <div class="section-h" style="margin:28px 0 14px"><h2>项目</h2></div>
+        <div class="card table-wrap">
+          <div class="t-toolbar">
+            <div class="tabs"><button class="on">全部</button><button>计算中</button><button>评审中</button><button>已交付</button><button>告警</button></div>
+            <div class="spacer" style="flex:1"></div>
+            <div class="search" style="width:240px;padding:7px 14px"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4-4"/></svg><input placeholder="搜索项目"/></div>
+          </div>
+          <table>
+            <thead><tr><th style="width:160px">项目 ID</th><th>项目名称</th><th style="width:130px">状态</th><th style="width:120px">工艺</th><th style="width:170px">负责人</th><th style="width:130px">进度</th></tr></thead>
+            <tbody>
+              <tr onclick="go('sim',document.querySelector('[data-screen=sim]'))" style="cursor:pointer">
+                <td><span class="cell-id"><span class="radio"></span>F-23982</span></td>
+                <td style="font-weight:550">城市污水处理厂 · A²/O 工艺</td>
+                <td><span class="stat" style="color:var(--green)"><span class="dot"></span>计算中</span></td>
+                <td>市政污水</td>
+                <td><div class="cell-user"><div class="av" style="background:#2563eb">徐</div>徐书洋</div></td>
+                <td><span class="badge secondary">55%</span></td>
+              </tr>
+              <tr>
+                <td><span class="cell-id"><span class="radio"></span>F-23981</span></td>
+                <td style="font-weight:550">工业园区中水回用 · MBR</td>
+                <td><span class="stat" style="color:var(--amber)"><span class="dot"></span>评审中</span></td>
+                <td>中水回用</td>
+                <td><div class="cell-user"><div class="av" style="background:#16a34a">林</div>林知远</div></td>
+                <td><span class="badge secondary">86%</span></td>
+              </tr>
+              <tr>
+                <td><span class="cell-id"><span class="radio"></span>F-23980</span></td>
+                <td style="font-weight:550">开发区雨污分流管网</td>
+                <td><span class="stat" style="color:var(--red)"><span class="dot"></span>2 处告警</span></td>
+                <td>市政管网</td>
+                <td><div class="cell-user"><div class="av" style="background:#d97706">王</div>王砚</div></td>
+                <td><span class="badge secondary">27%</span></td>
+              </tr>
+              <tr>
+                <td><span class="cell-id"><span class="radio"></span>F-23979</span></td>
+                <td style="font-weight:550">食品废水厌氧 · IC 反应器</td>
+                <td><span class="stat" style="color:var(--blue)"><span class="dot"></span>已交付</span></td>
+                <td>工业废水</td>
+                <td><div class="cell-user"><div class="av" style="background:#7c3aed">赵</div>赵岚</div></td>
+                <td><span class="badge green">100%</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="footer-note">Water Calculator · 优化版原型（shadcn/ui）· 工作台</div>
+      </section>
+
+      <!-- ============ 合规管理 ============ -->
+      <section class="screen" id="screen-comp">
+        <div class="page-head">
+          <div>
+            <div class="h1">合规管理</div>
+            <div class="sub">浏览设计说明时国标名词以缩略呈现，点击即可就地展开解释、执行约束计算并溯源到规范出处。</div>
+          </div>
+          <div class="spacer"></div>
+          <button class="btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>导出报告</button>
+          <button class="btn primary"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 6 9 17l-5-5"/></svg>校验全部约束</button>
+        </div>
+
+        <div class="grid-2" style="grid-template-columns:1fr 360px">
+          <div class="card doc">
+            <h2><span class="n">3</span>二级生物处理 · 设计参数</h2>
+            <p>本工程采用 A²/O 工艺进行二级生物处理。根据《室外排水设计标准》，生物反应池的设计需满足
+              <span class="term" onclick="toggleTerm(this,'t1')">污泥负荷</span>、
+              <span class="term" onclick="toggleTerm(this,'t2')">污泥龄</span>
+              与水力停留时间等核心参数的取值范围。其中污泥负荷直接影响出水水质与曝气能耗，须结合进水水质与目标出水标准取值。</p>
+            <div id="t1"></div>
+            <p>厌氧—缺氧—好氧三段的容积比例，应保证脱氮除磷所需的
+              <span class="term" onclick="toggleTerm(this,'t2')">污泥龄</span>。在本项目最冷月水温 12℃ 条件下，泥龄取值需相应延长以保证硝化反应充分进行。曝气系统按
+              <span class="term" onclick="toggleTerm(this,'t3')">需氧量</span>核算，并校核标准氧转移效率。</p>
+            <div id="t2"></div>
+            <p>二沉池设计须满足
+              <span class="term" onclick="toggleTerm(this,'t4')">表面负荷</span>限值，以保证泥水分离效果与出水悬浮物达标；同时校核固体负荷与污泥回流系统能力。</p>
+            <div id="t3"></div><div id="t4"></div>
+            <p style="color:var(--subtle-foreground);font-size:12.5px;margin-top:20px;border-top:1px dashed var(--border);padding-top:16px">
+              提示：带蓝色下划线的为可查阅国标的专业名词。仅「可查阅的国标」会被转化为计算约束，其余内容保持只读说明。</p>
+          </div>
+
+          <div>
+            <div class="card list-card" style="margin-bottom:20px">
+              <div class="lh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 4h12l4 4v12H4z"/><path d="M16 4v4h4"/></svg>引用规范 · 溯源</div>
+              <div class="li"><span class="code">GB 50014</span><div><div class="ti">室外排水设计标准</div><div class="de">第 6.6 节 · 活性污泥法 · 污泥负荷 / 泥龄取值</div></div></div>
+              <div class="li"><span class="code">GB 18918</span><div><div class="ti">城镇污水处理厂污染物排放标准</div><div class="de">一级 A 标准 · TN/TP/NH₃-N 限值</div></div></div>
+              <div class="li"><span class="code">CJJ 60</span><div><div class="ti">城镇污水处理厂运行规程</div><div class="de">二沉池表面负荷 · 污泥回流比范围</div></div></div>
+            </div>
+
+            <div class="card list-card" style="margin-bottom:20px">
+              <div class="lh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M9 12l2 2 4-4"/></svg>约束校验 · 实时</div>
+              <div class="constraint"><span class="ck" style="background:var(--green)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="ct">污泥负荷 0.10–0.20</span><span class="cv" style="color:var(--green-fg)">0.15 ✓</span></div>
+              <div class="constraint"><span class="ck" style="background:var(--green)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="ct">污泥龄 ≥ 15 d（12℃）</span><span class="cv" style="color:var(--green-fg)">18 ✓</span></div>
+              <div class="constraint"><span class="ck" style="background:var(--amber)">!</span><span class="ct">污泥回流比 50–100%</span><span class="cv" style="color:var(--amber-fg)">115 ⚠</span></div>
+              <div class="constraint"><span class="ck" style="background:var(--green)"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="ct">二沉池表面负荷 ≤ 1.5</span><span class="cv" style="color:var(--green-fg)">1.2 ✓</span></div>
+            </div>
+
+            <div class="card panel">
+              <div class="section-h" style="margin-bottom:10px"><h2 style="font-size:14.5px">合规小结</h2></div>
+              <p style="font-size:12.5px;color:#52525b;line-height:1.65">本节共 4 项国标约束，<b style="color:var(--green-fg)">3 项通过</b>、<b style="color:var(--amber-fg)">1 项越界</b>。建议下调污泥回流比至 100% 以内，或核算二沉池泥水分离能力后保留。</p>
+            </div>
+          </div>
+        </div>
+        <div class="footer-note">Water Calculator · 优化版原型（shadcn/ui）· 合规管理</div>
+      </section>
+
+      <!-- ============ 实时模拟 ============ -->
+      <section class="screen wide" id="screen-sim">
+        <div class="sim-wrap">
+          <!-- 进度面板 -->
+          <div class="pnl prog">
+            <div class="pnl-h"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg><div class="pt">进度面板<small>STEP-BASED · 22 步</small></div></div>
+            <div class="steps">
+              <div class="step done"><span class="si"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="sx">① 水量水质核定</span></div>
+              <div class="step done"><span class="si"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="sx">② 工艺流程确定</span></div>
+              <div class="step done"><span class="si"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="sx">③ 格栅与沉砂池</span></div>
+              <div class="step done"><span class="si"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span><span class="sx">④ 初沉池设计</span></div>
+              <div class="step active"><span class="si">5</span><span class="sx">⑤ 生物反应池</span></div>
+              <div class="substep done"><span class="d"></span>5.1 容积计算</div>
+              <div class="substep done"><span class="d"></span>5.2 污泥负荷校核</div>
+              <div class="substep err"><span class="d"></span>5.3 需氧量与曝气</div>
+              <div class="substep"><span class="d"></span>5.4 回流系统</div>
+              <div class="step err"><span class="si">!</span><span class="sx">⑥ 二沉池设计</span><span class="err-tag">连带 ×3</span></div>
+              <div class="step"><span class="si">7</span><span class="sx">⑦ 污泥处理</span></div>
+              <div class="step"><span class="si">8</span><span class="sx">⑧ 消毒系统</span></div>
+              <div class="step"><span class="si">9</span><span class="sx" style="color:var(--subtle-foreground)">⑨ 出水排放…</span></div>
+              <div style="padding:14px;color:var(--subtle-foreground);font-size:11.5px;text-align:center">还有 13 个步骤</div>
+            </div>
+          </div>
+
+          <!-- 显示面板 -->
+          <div class="pnl disp">
+            <div class="pnl-h"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 17l5-5 4 3 8-9"/></svg><div class="pt">显示面板 · 5.3 需氧量与曝气计算<small>当前步骤 · 实时联动</small></div></div>
+            <div class="disp-body">
+              <div class="dep-alert">
+                <div class="ai"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+                <div class="at"><b>检测到 1 个核心错误，引发 3 处连带错误</b><p>「需氧量 AOR」因水温参数缺失计算异常，已影响：二沉池表面负荷、曝气池容积、风机选型。</p></div>
+                <button class="btn" onclick="fixDeps(this)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14.7 6.3a4 4 0 0 0-5.6 5.6L4 17v3h3l5.1-5.1a4 4 0 0 0 5.6-5.6l-2.3 2.3-2-2 2.3-2.3Z"/></svg>一键修复依赖</button>
+              </div>
+
+              <div class="card dep-graph">
+                <div class="dh"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="5" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="12" r="2"/><path d="M7 6h6a3 3 0 0 1 0 6m-6 6h6a3 3 0 0 0 0-6"/></svg>依赖关系链 · 错误传播路径</div>
+                <div class="mini-flow">
+                  <span class="node err">水温 T（缺失）</span><span class="arr bad">→</span>
+                  <span class="node err">需氧量 AOR</span><span class="arr bad">→</span>
+                  <span class="node">曝气池容积</span><span class="arr">→</span>
+                  <span class="node">风机选型</span><span class="arr">→</span>
+                  <span class="node">二沉池负荷</span>
+                </div>
+                <div style="font-size:11.5px;color:var(--muted-foreground);margin-top:12px;display:flex;gap:18px">
+                  <span class="stat" style="color:var(--red)"><span class="dot"></span>核心错误</span>
+                  <span class="stat" style="color:var(--subtle-foreground)"><span class="dot"></span>连带受影响</span>
+                </div>
+              </div>
+
+              <div class="card calc-card">
+                <div class="cc-h"><div class="n">5.3</div><h3>需氧量 AOR 计算</h3><div class="formula">AOR = a'·Q·(S₀-Se) + b'·V·Xv</div></div>
+                <div class="form-grid">
+                  <div class="fg"><label>设计流量 Q <span class="req">*</span></label><div class="ipt"><input value="50000" oninput="recalc()"><span class="u">m³/d</span></div><span class="note">来自步骤① 水量核定</span></div>
+                  <div class="fg err"><label>最冷月水温 T <span class="req">*</span></label><div class="ipt"><input id="tempInput" placeholder="待填写" oninput="recalc()"><span class="u">℃</span></div><span class="note">⚠ 缺失：硝化速率随温度变化，必填</span></div>
+                  <div class="fg"><label>进水 BOD₅（S₀）</label><div class="ipt"><input value="200" oninput="recalc()"><span class="u">mg/L</span></div><span class="note">来自② 进水水质</span></div>
+                  <div class="fg"><label>出水 BOD₅（Se）</label><div class="ipt"><input value="10" oninput="recalc()"><span class="u">mg/L</span></div><span class="note">一级 A 标准约束</span></div>
+                  <div class="fg linked"><label>耗氧系数 a′（联动）</label><div class="ipt"><input value="0.52" oninput="recalc()"><span class="u">—</span></div><span class="note">国标取值范围 0.42–0.53</span></div>
+                  <div class="fg linked"><label>内源系数 b′（联动）</label><div class="ipt"><input value="0.11" oninput="recalc()"><span class="u">d⁻¹</span></div><span class="note">随泥龄联动更新</span></div>
+                </div>
+                <div style="margin-top:18px">
+                  <label style="font-size:12.5px;font-weight:500">污泥龄 SRT 灵敏度调节<span style="color:var(--muted-foreground);font-weight:400"> · 实时影响右侧模拟</span></label>
+                  <div class="slider-row"><input type="range" min="10" max="30" value="18" oninput="document.getElementById('srtVal').textContent=this.value;recalc()"></div>
+                  <div class="sld-marks"><span>10 d</span><span style="color:var(--foreground);font-weight:700">当前 <span id="srtVal">18</span> d</span><span>30 d</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 模拟面板（暗色，呼应原作 Liner Flow） -->
+          <div class="pnl sim">
+            <div class="pnl-h"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#4ade80" stroke-width="1.8"><path d="M3 3v18h18"/><path d="M7 14l3-4 4 3 5-7"/></svg><div class="pt" style="color:#fff">模拟面板<small>REAL-TIME PREVIEW</small></div></div>
+            <div class="sim-body">
+              <div class="sim-stat">
+                <div class="s good"><div class="l">出水 BOD₅</div><div class="v">9.2<small> mg/L</small></div></div>
+                <div class="s" id="statTN"><div class="l">出水 TN</div><div class="v">14.8<small> mg/L</small></div></div>
+                <div class="s"><div class="l">曝气能耗</div><div class="v">2840<small> kWh/d</small></div></div>
+                <div class="s bad" id="statNH"><div class="l">NH₃-N（12℃）</div><div class="v">6.1<small> mg/L</small></div></div>
+              </div>
+
+              <div class="sim-sec">
+                <div class="ssh">脱氮效果 · 随泥龄变化<span class="live"><span class="pulse"></span>实时</span></div>
+                <div class="viz">
+                  <svg viewBox="0 0 340 150" width="100%" height="135">
+                    <defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4ade80" stop-opacity=".3"/><stop offset="1" stop-color="#4ade80" stop-opacity="0"/></linearGradient></defs>
+                    <line x1="36" y1="20" x2="36" y2="120" stroke="#272d3a"/><line x1="36" y1="120" x2="328" y2="120" stroke="#272d3a"/>
+                    <line x1="36" y1="50" x2="328" y2="50" stroke="#1d212b" stroke-dasharray="3 3"/><line x1="36" y1="85" x2="328" y2="85" stroke="#1d212b" stroke-dasharray="3 3"/>
+                    <text x="8" y="24" font-size="9" fill="#71798a">100</text><text x="14" y="88" font-size="9" fill="#71798a">50</text><text x="20" y="123" font-size="9" fill="#71798a">0</text>
+                    <path d="M36 110 C 90 105, 120 70, 165 48 S 260 26, 328 22 L328 120 L36 120 Z" fill="url(#g1)"/>
+                    <path d="M36 110 C 90 105, 120 70, 165 48 S 260 26, 328 22" fill="none" stroke="#4ade80" stroke-width="2.5"/>
+                    <line id="srtMarker" x1="175" y1="20" x2="175" y2="120" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4 3"/>
+                    <circle id="srtDot" cx="175" cy="44" r="4" fill="#fbbf24" stroke="#0b0e14" stroke-width="1.5"/>
+                    <text x="60" y="138" font-size="9" fill="#71798a">短泥龄</text><text x="250" y="138" font-size="9" fill="#71798a">长泥龄 →硝化↑</text>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="sim-sec">
+                <div class="ssh">A²/O 生物池 · 实时液位剖面</div>
+                <div class="viz">
+                  <svg viewBox="0 0 340 130" width="100%" height="120">
+                    <rect x="14" y="40" width="92" height="72" rx="3" fill="#0f141d" stroke="#272d3a"/>
+                    <rect x="14" y="60" width="92" height="52" rx="3" fill="#1e3a5f"/>
+                    <path d="M14 60 q23 -6 46 0 t46 0 v52 h-92 Z" fill="#2563eb" opacity=".45"/>
+                    <text x="60" y="125" font-size="9" fill="#8b94a7" text-anchor="middle">厌氧池</text>
+                    <rect x="124" y="40" width="92" height="72" rx="3" fill="#0f141d" stroke="#272d3a"/>
+                    <rect x="124" y="54" width="92" height="58" rx="3" fill="#1e3a5f"/>
+                    <text x="170" y="125" font-size="9" fill="#8b94a7" text-anchor="middle">缺氧池</text>
+                    <rect x="234" y="40" width="92" height="72" rx="3" fill="#0f141d" stroke="#272d3a"/>
+                    <rect x="234" y="50" width="92" height="62" rx="3" fill="#1e3a5f"/>
+                    <circle cx="252" cy="96" r="2" fill="#7db4f5" opacity=".9"/><circle cx="268" cy="88" r="2.5" fill="#7db4f5" opacity=".8"/><circle cx="284" cy="98" r="1.8" fill="#7db4f5" opacity=".9"/><circle cx="300" cy="84" r="2.2" fill="#7db4f5" opacity=".8"/><circle cx="276" cy="100" r="1.6" fill="#7db4f5" opacity=".8"/>
+                    <text x="280" y="125" font-size="9" fill="#8b94a7" text-anchor="middle">好氧池（曝气）</text>
+                    <path d="M106 76 h18" stroke="#4ade80" stroke-width="1.5" marker-end="url(#ah)"/><path d="M216 76 h18" stroke="#4ade80" stroke-width="1.5" marker-end="url(#ah)"/>
+                    <defs><marker id="ah" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0 0 L6 3 L0 6 Z" fill="#4ade80"/></marker></defs>
+                    <text x="170" y="22" font-size="10" fill="#c8cedb" font-weight="600" text-anchor="middle">实时液位模拟</text>
+                  </svg>
+                </div>
+              </div>
+
+              <div class="sim-sec">
+                <div class="ssh">达标指标 · 出水</div>
+                <div class="viz grid4">
+                  <div class="qi"><div class="ql">COD</div><div class="qv" style="color:#4ade80">38<small style="font-size:9px;color:#71798a"> /50</small></div></div>
+                  <div class="qi"><div class="ql">SS</div><div class="qv" style="color:#4ade80">8<small style="font-size:9px;color:#71798a"> /10</small></div></div>
+                  <div class="qi"><div class="ql">TP</div><div class="qv" style="color:#4ade80">0.4<small style="font-size:9px;color:#71798a"> /0.5</small></div></div>
+                  <div class="qi"><div class="ql">NH₃-N</div><div class="qv" id="qNH" style="color:#f87171">6.1<small style="font-size:9px;color:#71798a"> /5</small></div></div>
+                </div>
+                <div style="font-size:11px;color:#fbbf24;background:rgba(251,191,36,.1);padding:8px 11px;border-radius:8px;margin-top:10px;display:flex;gap:7px;align-items:center"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>填入水温后将重算 NH₃-N，预计低温需延长泥龄</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ 行业洞察 ============ -->
+      <section class="screen" id="screen-ins">
+        <div class="page-head">
+          <div>
+            <div class="h1">行业洞察</div>
+            <div class="sub">汇集相似项目工程师每次迭代填写的操作理由与失败原因，配合资深专家建议，帮助你做出更可落地的决策。</div>
+          </div>
+          <div class="spacer"></div>
+          <div class="seg"><button class="on">A²/O 市政</button><button>全部工艺</button></div>
+        </div>
+
+        <div class="grid-2" style="grid-template-columns:1fr 340px">
+          <div>
+            <div class="card insight" style="margin-bottom:20px">
+              <div class="ins-h">
+                <div class="ai" style="background:var(--red)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/></svg></div>
+                <div><h3>相似项目失败原因聚合</h3><div class="s2">基于 214 个 A²/O 市政项目的迭代记录 · 失败原因有限可收敛</div></div>
+                <div class="pct"><b>63%</b><span>最高频成因</span></div>
+              </div>
+              <div class="ins-body">这些数据来自工程师每次迭代时填写的「操作理由」。由于失败原因相对有限，系统将其聚合后展示给后来做相似项目的人——你当前的设计正命中其中第一项风险。</div>
+              <div class="reasons">
+                <div class="reason"><div class="barwrap"><i style="width:63%"></i><span>未考虑冬季低温对硝化的影响</span></div><div class="pn">63%</div></div>
+                <div class="reason"><div class="barwrap"><i style="width:48%"></i><span>污泥回流比取值偏离实际运行</span></div><div class="pn">48%</div></div>
+                <div class="reason"><div class="barwrap"><i style="width:39%"></i><span>忽略进水水质波动（峰值系数）</span></div><div class="pn">39%</div></div>
+                <div class="reason"><div class="barwrap"><i style="width:27%"></i><span>二沉池泥水分离能力不足</span></div><div class="pn">27%</div></div>
+                <div class="reason"><div class="barwrap"><i style="width:18%"></i><span>碳源不足导致反硝化受限</span></div><div class="pn">18%</div></div>
+              </div>
+            </div>
+
+            <div class="card insight">
+              <div class="ins-h">
+                <div class="ai" style="background:var(--primary)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                <div><h3>资深专家经验沉淀</h3><div class="s2">由资深工程师与指导老师就本工艺给出的现实校正</div></div>
+              </div>
+              <div class="expert">
+                <div class="av" style="background:#7c3aed">赵</div>
+                <div style="flex:1">
+                  <div class="nm">赵岚 · 资深审核工程师 <svg class="v" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Z"/></svg></div>
+                  <div class="ro">22 年市政污水经验 · 审核 80+ 项目</div>
+                  <div class="qt">"学生方案常把先进工艺想得理所当然。12℃ 水温下，硝化速率只有 20℃ 的 1/3，泥龄不延长，氨氮必然超标——这不是数字问题，是冬天厂子真的会瘫。"</div>
+                  <div class="meta"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12M15 5.9 14 10h5.6a2 2 0 0 1 2 2.4l-1.4 6a2 2 0 0 1-2 1.6H7"/></svg>87 人觉得有用</span><span>引用到本项目</span></div>
+                </div>
+              </div>
+              <div class="expert">
+                <div class="av" style="background:#16a34a">陈</div>
+                <div style="flex:1">
+                  <div class="nm">陈默 · 指导老师 <svg class="v" width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Z"/></svg></div>
+                  <div class="ro">环境工程系 · 工业废水处理课程</div>
+                  <div class="qt">"别为创新而创新。先让系统在现实里跑得起来，再谈优化。每改一个参数，问自己：这背后对应的是哪种真实工况？"</div>
+                  <div class="meta"><span><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 10v12M15 5.9 14 10h5.6a2 2 0 0 1 2 2.4l-1.4 6a2 2 0 0 1-2 1.6H7"/></svg>64 人觉得有用</span><span>引用到本项目</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div class="card ai-rec" style="margin-bottom:20px">
+              <h4><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#93b4fb" stroke-width="2"><path d="M12 3a6 6 0 0 1 4 10.5c-.7.6-1 .9-1 1.5H9c0-.6-.3-.9-1-1.5A6 6 0 0 1 12 3Z"/><path d="M9 18h6M10 21h4"/></svg>AI 给新人的建议<span class="sp">基于 214 案例</span></h4>
+              <div class="ad">针对你当前「5.3 需氧量与曝气」步骤的实时建议</div>
+              <div class="ai-item"><div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg></div><div><div class="tt">补填最冷月水温 12℃</div><div class="dd">这是 63% 失败案例的共因，将触发泥龄与需氧量重算</div></div><div class="conf">必要 ●●●</div></div>
+              <div class="ai-item"><div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l5-5 4 3 8-9"/></svg></div><div><div class="tt">泥龄延长至 ≥ 20 d</div><div class="dd">低温下保证硝化充分，模拟显示 NH₃-N 可降至 4.2</div></div><div class="conf">推荐 ●●○</div></div>
+              <div class="ai-item"><div class="ic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.6"/><path d="M21 4v5h-5"/></svg></div><div><div class="tt">复核污泥回流比 ≤ 100%</div><div class="dd">当前 115% 越界，48% 案例在此踩坑</div></div><div class="conf">提示 ●○○</div></div>
+            </div>
+
+            <div class="card panel">
+              <div class="section-h" style="margin-bottom:14px"><h2 style="font-size:14.5px">本项目迭代理由 · 沉淀</h2></div>
+              <div class="timeline">
+                <div class="tl-item"><div class="tdot" style="background:var(--primary)">徐</div><div><div class="ti2">调高耗氧系数 a′ → 0.52</div><div class="rs">"进水有机负荷偏高，按规范上限取值以保证供氧裕度。"</div><div class="tm">刚刚 · 你</div></div></div>
+                <div class="tl-item"><div class="tdot" style="background:var(--amber)">林</div><div><div class="ti2">回流比从 75% → 115%</div><div class="rs">"为提升脱氮想加大内回流——已被合规约束标记越界，待复核。"</div><div class="tm">35 分钟前 · 林工</div></div></div>
+                <div class="tl-item"><div class="tdot" style="background:var(--green)">徐</div><div><div class="ti2">泥龄初设 18 d</div><div class="rs">"参考同类 5 万吨厂经验值，后续按水温微调。"</div><div class="tm">2 小时前 · 你</div></div></div>
+              </div>
+              <button class="btn" style="width:100%;justify-content:center;margin-top:8px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>记录本次迭代理由</button>
+            </div>
+          </div>
+        </div>
+        <div class="footer-note">Water Calculator · 优化版原型（shadcn/ui）· 行业洞察</div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function go(id, el){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById('screen-'+id).classList.add('active');
+    document.querySelectorAll('.nav a[data-screen]').forEach(a=>a.classList.remove('active'));
+    const link=(el&&el.dataset&&el.dataset.screen)?el:document.querySelector('.nav a[data-screen='+id+']');
+    if(link)link.classList.add('active');
+    document.querySelector('.scroll').scrollTop=0;
+  }
+
+  const TERMS={
+    t1:{tag:'污泥负荷 Ns',code:'GB 50014 · 6.6.18',def:'污泥负荷指单位质量活性污泥在单位时间内所承受的有机物量（kgBOD₅/kgMLSS·d）。取值直接影响出水水质与曝气能耗。',inputs:[['进水 BOD₅','200','mg/L'],['MLSS 浓度','3500','mg/L'],['曝气池容积 V','12500','m³']],result:'0.15',unit:'kgBOD₅/kgMLSS·d',range:[0.10,0.20],ok:true},
+    t2:{tag:'污泥龄 SRT',code:'GB 50014 · 6.6.20',def:'污泥龄（泥龄）指活性污泥在系统内的平均停留时间（d）。脱氮工艺中泥龄须满足硝化菌世代周期，低温时需相应延长。',inputs:[['系统污泥总量','43750','kg'],['每日排泥量','2430','kg/d'],['最冷月水温','12','℃']],result:'18',unit:'d',range:[15,25],ok:true,note:'12℃ 低温要求 ≥15 d'},
+    t3:{tag:'需氧量 AOR',code:'GB 50014 · 6.6.23',def:'需氧量指生物处理去除有机物及硝化所需的氧量（kgO₂/d），由碳化需氧与硝化需氧两部分组成，是曝气系统选型的核心依据。',inputs:[['设计流量 Q','50000','m³/d'],['BOD 去除量','9.5','t/d'],['硝化耗氧','—','缺水温']],result:'待补水温',unit:'kgO₂/d',range:null,ok:false,note:'⚠ 依赖水温参数，当前计算异常'},
+    t4:{tag:'表面负荷 q',code:'CJJ 60 · 二沉池',def:'二沉池表面负荷指单位沉淀面积单位时间承担的水量（m³/m²·h），决定泥水分离效果与出水悬浮物指标。',inputs:[['设计流量 Q','50000','m³/d'],['二沉池表面积','1740','m²']],result:'1.2',unit:'m³/m²·h',range:[0,1.5],ok:true}
+  };
+  function toggleTerm(span,key){
+    const box=document.getElementById(key);
+    if(span.classList.contains('open')){span.classList.remove('open');box.innerHTML='';return;}
+    document.querySelectorAll('.term.open').forEach(t=>t.classList.remove('open'));
+    span.classList.add('open');
+    const t=TERMS[key];
+    const rows=t.inputs.map(i=>`<div class="calc-line"><label>${i[0]}</label><div class="field"><input value="${i[1]}"><span class="unit">${i[2]}</span></div></div>`).join('');
+    const hint=t.range?
+      `<div class="range-hint ${t.ok?'ok':'over'}"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${t.ok?'<path d=\"M20 6 9 17l-5-5\"/>':'<path d=\"M12 9v4M12 17h.01\"/><circle cx=\"12\" cy=\"12\" r=\"9\"/>'}</svg>国标取值范围 ${t.range[0]}–${t.range[1]} ${t.unit}${t.note?' · '+t.note:''}</div>`:
+      `<div class="range-hint over"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4M12 17h.01"/><circle cx="12" cy="12" r="9"/></svg>${t.note||''}</div>`;
+    box.innerHTML=`<div class="inline-calc"><div class="ic-head"><span class="tg">${t.tag}</span><span class="src"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>溯源 ${t.code}</span></div><div class="ic-body"><div class="def">${t.def}</div>${rows}${hint}<div class="result-box"><div><div class="rl">计算结果</div><div class="rv">${t.result}</div></div><div class="ok">${t.ok?'<svg width=\"12\" height=\"12\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#fff\" stroke-width=\"3\"><path d=\"M20 6 9 17l-5-5\"/></svg>符合约束':'待补参数'}</div></div></div></div>`;
+    box.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+
+  function fixDeps(btn){
+    document.getElementById('tempInput').value='12';
+    btn.innerHTML='已修复 ✓';btn.style.background='var(--green)';btn.style.borderColor='var(--green)';btn.style.color='#fff';
+    document.querySelectorAll('#screen-sim .substep.err').forEach(s=>{s.classList.remove('err');s.classList.add('done');});
+    const errStep=document.querySelector('#screen-sim .step.err');
+    if(errStep){errStep.classList.remove('err');errStep.classList.add('done');errStep.querySelector('.si').innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg>';const tag=errStep.querySelector('.err-tag');if(tag)tag.remove();}
+    const al=document.querySelector('#screen-sim .dep-alert');
+    al.style.background='var(--green-soft)';al.style.borderColor='#bbf7d0';
+    al.querySelector('.ai').style.background='var(--green)';
+    al.querySelector('.ai').innerHTML='<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>';
+    al.querySelector('.at b').textContent='已自动修复全部依赖项';al.querySelector('.at b').style.color='var(--green-fg)';
+    al.querySelector('.at p').textContent='已回填水温 12℃，需氧量、二沉池负荷、曝气池容积、风机选型同步重算。';al.querySelector('.at p').style.color='#3f9e6a';
+    document.querySelectorAll('#screen-sim .mini-flow .node.err').forEach(n=>n.classList.remove('err'));
+    document.querySelectorAll('#screen-sim .mini-flow .arr.bad').forEach(a=>a.classList.remove('bad'));
+    recalc();
+  }
+
+  function recalc(){
+    const temp=parseFloat(document.getElementById('tempInput').value);
+    const srt=parseFloat(document.getElementById('srtVal').textContent);
+    const statNH=document.getElementById('statNH'),statTN=document.getElementById('statTN'),qNH=document.getElementById('qNH');
+    const x=36+((srt-10)/20)*292;
+    const marker=document.getElementById('srtMarker'),dot=document.getElementById('srtDot');
+    if(marker){marker.setAttribute('x1',x);marker.setAttribute('x2',x);}
+    const y=110-Math.min(88,((srt-10)/20)*92);
+    if(dot){dot.setAttribute('cx',x);dot.setAttribute('cy',y);}
+    if(!isNaN(temp)){
+      let nh=Math.max(1.5,(20-temp)*0.5-(srt-15)*0.45+2);nh=Math.round(nh*10)/10;
+      statNH.querySelector('.v').innerHTML=nh+'<small> mg/L</small>';
+      if(qNH)qNH.innerHTML=nh+'<small style="font-size:9px;color:#71798a"> /5</small>';
+      if(nh<=5){statNH.classList.remove('bad');statNH.classList.add('good');if(qNH)qNH.style.color='#4ade80';}
+      else{statNH.classList.add('bad');statNH.classList.remove('good');if(qNH)qNH.style.color='#f87171';}
+      let tn=Math.max(8,15-(srt-18)*0.4);tn=Math.round(tn*10)/10;
+      statTN.querySelector('.v').innerHTML=tn+'<small> mg/L</small>';
+      statTN.classList.toggle('good',tn<=15);
+    }
+  }
+  recalc();
+</script>
+</body>
+</html>
