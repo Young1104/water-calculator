@@ -12,7 +12,7 @@
 | 文件 | 说明 |
 |---|---|
 | `index.html` | 着陆页（Pages 首页） |
-| `Water-Calculator-PRD.html` | **最终版高保真原型**：全中文、全可交互、Notion 式文档工具栏 |
+| `Water-Calculator-PRD.html` | **最终版高保真原型**：全中文、全可交互、文档工具栏 |
 | `design-system.html` | 设计系统 / 设计组件（设计令牌 + 核心组件 + 行内标注体系） |
 | `PRD-01-Water-Calculator.md` | 产品需求文档 PRD v2 |
 | `01-Water-Calculator.md` | 项目背景介绍 |
