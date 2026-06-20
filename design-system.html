@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Water Calculator · 设计系统 / 设计组件</title>
+<style>
+  :root{
+    --bg:#ffffff;--sidebar:#fbfbfa;--text:#37352f;--text-2:#6b6a66;--text-3:#737269;
+    --border:#ededeb;--border-2:#e4e3e0;--hover:#f3f2f0;--active:#ecebe8;
+    --blue:#2d6bff;--blue-soft:#ebf1ff;--blue-fg:#1d52e0;--blue-press:#1a47c0;
+    --green:#30a46c;--green-soft:#eaf6ef;--green-fg:#1f7a4d;
+    --amber:#d9870a;--amber-soft:#fbf3e4;--amber-fg:#9c5d09;
+    --red:#e5484d;--red-soft:#fdecec;--red-fg:#c1272d;
+    --violet:#9065d9;--violet-soft:#f2edfb;--violet-fg:#6941b8;
+    --radius:8px;--radius-sm:6px;--radius-lg:12px;
+    --shadow:0 1px 2px rgba(15,15,15,.05),0 8px 22px -10px rgba(15,15,15,.1);
+    --mono:"SF Mono",ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Inter","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:var(--sans);background:var(--sidebar);color:var(--text);-webkit-font-smoothing:antialiased;line-height:1.55}
+  .wrap{max-width:980px;margin:0 auto;padding:56px 32px 96px}
+  .head{margin-bottom:8px}
+  .head .kicker{font-size:12px;font-weight:600;color:var(--blue-fg);letter-spacing:.08em}
+  h1{font-size:32px;font-weight:720;letter-spacing:-.035em;margin:6px 0 8px}
+  .lead{color:var(--text-2);font-size:14.5px;max-width:640px}
+  .back{display:inline-flex;align-items:center;gap:6px;margin-top:18px;font-size:13px;color:var(--text-2);text-decoration:none}
+  .back:hover{color:var(--text)}
+  section{margin-top:48px}
+  .sh{font-size:12px;font-weight:600;color:var(--text-3);letter-spacing:.05em;margin-bottom:16px;padding-bottom:9px;border-bottom:1px solid var(--border)}
+  .card{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px}
+  .grid{display:grid;gap:14px}
+  .cols-6{grid-template-columns:repeat(6,1fr)}
+  .cols-4{grid-template-columns:repeat(4,1fr)}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .cols-2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:760px){.cols-6,.cols-4,.cols-3{grid-template-columns:repeat(2,1fr)}}
+  /* color swatches */
+  .sw{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)}
+  .sw .chip{height:64px}
+  .sw .meta{padding:9px 11px}
+  .sw .nm{font-size:12.5px;font-weight:600}
+  .sw .hex{font-size:11px;color:var(--text-3);font-family:var(--mono);margin-top:2px}
+  /* type scale */
+  .type-row{display:flex;align-items:baseline;gap:16px;padding:11px 0;border-bottom:1px solid var(--border)}
+  .type-row:last-child{border-bottom:0}
+  .type-row .lbl{width:120px;font-size:12px;color:var(--text-3);font-family:var(--mono);flex:none}
+  /* tokens table */
+  .tk{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+  .tk:last-child{border-bottom:0}
+  .tk .k{color:var(--text-2)}
+  .tk .v{font-family:var(--mono);font-size:12px}
+  .tk .demo{width:90px;display:flex;justify-content:flex-end;align-items:center}
+  /* primitives */
+  .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+  .btn{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;border:1px solid var(--border-2);background:#fff;color:var(--text)}
+  .btn.primary{background:var(--blue-fg);border-color:var(--blue-fg);color:#fff}
+  .btn.ghost{border-color:transparent;background:transparent;color:var(--text-2)}
+  .btn.sm{height:28px;padding:0 10px;font-size:12.5px}
+  .badge{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 9px;border-radius:6px;background:var(--hover);color:var(--text-2)}
+  .badge.blue{background:var(--blue-soft);color:var(--blue-fg)}.badge.green{background:var(--green-soft);color:var(--green-fg)}
+  .badge.amber{background:var(--amber-soft);color:var(--amber-fg)}.badge.red{background:var(--red-soft);color:var(--red-fg)}.badge.violet{background:var(--violet-soft);color:var(--violet-fg)}
+  .dot{width:7px;height:7px;border-radius:50%;display:inline-block}
+  .stat{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:550}
+  .bar{height:6px;border-radius:4px;background:var(--border);overflow:hidden;width:140px}
+  .bar i{display:block;height:100%;border-radius:4px;background:var(--blue)}
+  .switch{width:36px;height:20px;border-radius:999px;background:var(--border-2);position:relative;display:inline-block}
+  .switch.on{background:var(--green)}
+  .switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+  .switch.on::after{left:18px}
+  .seg{display:inline-flex;background:var(--sidebar);border:1px solid var(--border);border-radius:var(--radius-sm);padding:3px}
+  .seg button{border:0;background:transparent;height:28px;padding:0 13px;border-radius:5px;font-size:12.5px;font-weight:500;color:var(--text-2)}
+  .seg button.on{background:#fff;color:var(--text);box-shadow:0 1px 2px rgba(15,15,15,.06)}
+  .ipt{display:flex;align-items:center;border:1px solid var(--border-2);border-radius:var(--radius-sm);height:34px;overflow:hidden;background:#fff;width:200px}
+  .ipt input{border:0;outline:0;padding:0 11px;font-size:13px;width:100%;font-family:var(--mono)}
+  .ipt .u{padding:0 10px;font-size:11px;color:var(--text-3);border-left:1px solid var(--border);height:100%;display:flex;align-items:center;background:var(--sidebar)}
+  /* inline marks */
+  .demo-doc{font-size:14.5px;line-height:2;color:#2f2e2b}
+  .kw{color:var(--blue-fg);text-decoration:underline;text-decoration-color:#9bbcf7;text-decoration-thickness:1.5px;text-underline-offset:3px;font-weight:550}
+  .term{color:var(--blue-fg);text-decoration:underline;text-decoration-style:dotted;text-decoration-color:#a9c2f7;text-underline-offset:3px;font-weight:500}
+  .flag-c{text-decoration:underline;text-decoration-style:wavy;text-decoration-color:var(--red);text-decoration-thickness:1.5px}
+  .flag-i{text-decoration:underline;text-decoration-style:wavy;text-decoration-color:var(--violet);text-decoration-thickness:1.5px}
+  .legend{display:flex;flex-wrap:wrap;gap:18px;font-size:12.5px;color:var(--text-2);margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .legend span{display:flex;align-items:center;gap:6px}
+  /* card samples */
+  .pcard{border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;background:#fff}
+  .pcard .pt{display:flex;align-items:center;gap:8px;margin-bottom:9px}
+  .pcard .ago{font-size:11.5px;color:var(--text-3)}
+  .pcard .av{width:24px;height:24px;border-radius:999px;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:600;margin-left:auto;background:var(--blue)}
+  .pcard h3{font-size:14.5px;font-weight:600}
+  .pcard .desc{font-size:12.5px;color:var(--text-2);margin-top:3px}
+  .pcard .pf{margin-top:14px}
+  .pcard .arow{display:flex;align-items:center;gap:8px;margin-bottom:8px;font-size:11.5px;color:var(--text-2)}
+  .pcard .pct{margin-left:auto;font-weight:550}
+  .menu{width:200px;border:1px solid var(--border-2);border-radius:var(--radius-lg);box-shadow:var(--shadow);background:#fff;padding:5px}
+  .mi{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;font-size:13px;color:var(--text)}
+  .mi:hover{background:var(--hover)}
+  .mi.danger{color:var(--red-fg)}
+  .mi-sep{height:1px;background:var(--border);margin:5px 0}
+  .toast{display:inline-flex;align-items:center;gap:9px;background:var(--text);color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;box-shadow:var(--shadow)}
+  .note{font-size:12px;color:var(--text-3);margin-top:10px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="kicker">DESIGN SYSTEM · 设计系统</div>
+    <h1>Water Calculator 设计组件</h1>
+    <p class="lead">从最终原型抽取的设计令牌与核心组件，采用 Notion / Manus 极简风格。颜色已满足 WCAG 2.1 AA 对比度。</p>
+    <a class="back" href="index.html">← 返回首页</a>
+  </div>
+
+  <!-- 颜色 -->
+  <section>
+    <div class="sh">颜色 · COLORS</div>
+    <div class="card">
+      <div style="font-size:12.5px;color:var(--text-2);margin-bottom:12px">品牌 / 语义色（强调用，克制）</div>
+      <div class="grid cols-6">
+        <div class="sw"><div class="chip" style="background:#2d6bff"></div><div class="meta"><div class="nm">主蓝</div><div class="hex">#2D6BFF</div></div></div>
+        <div class="sw"><div class="chip" style="background:#1d52e0"></div><div class="meta"><div class="nm">按钮蓝</div><div class="hex">#1D52E0</div></div></div>
+        <div class="sw"><div class="chip" style="background:#30a46c"></div><div class="meta"><div class="nm">完成绿</div><div class="hex">#30A46C</div></div></div>
+        <div class="sw"><div class="chip" style="background:#d9870a"></div><div class="meta"><div class="nm">警告橙</div><div class="hex">#D9870A</div></div></div>
+        <div class="sw"><div class="chip" style="background:#e5484d"></div><div class="meta"><div class="nm">错误红</div><div class="hex">#E5484D</div></div></div>
+        <div class="sw"><div class="chip" style="background:#9065d9"></div><div class="meta"><div class="nm">洞察紫</div><div class="hex">#9065D9</div></div></div>
+      </div>
+      <div style="font-size:12.5px;color:var(--text-2);margin:20px 0 12px">中性色（文字 / 边框 / 背景，均过 AA）</div>
+      <div class="grid cols-6">
+        <div class="sw"><div class="chip" style="background:#37352f"></div><div class="meta"><div class="nm">正文</div><div class="hex">#37352F</div></div></div>
+        <div class="sw"><div class="chip" style="background:#6b6a66"></div><div class="meta"><div class="nm">次级</div><div class="hex">#6B6A66</div></div></div>
+        <div class="sw"><div class="chip" style="background:#737269"></div><div class="meta"><div class="nm">三级</div><div class="hex">#737269</div></div></div>
+        <div class="sw"><div class="chip" style="background:#ededeb"></div><div class="meta"><div class="nm">边框</div><div class="hex">#EDEDEB</div></div></div>
+        <div class="sw"><div class="chip" style="background:#fbfbfa;border-bottom:1px solid var(--border)"></div><div class="meta"><div class="nm">侧栏底</div><div class="hex">#FBFBFA</div></div></div>
+        <div class="sw"><div class="chip" style="background:#ffffff;border-bottom:1px solid var(--border)"></div><div class="meta"><div class="nm">背景</div><div class="hex">#FFFFFF</div></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 字体 -->
+  <section>
+    <div class="sh">字体 · TYPOGRAPHY</div>
+    <div class="card">
+      <div class="type-row"><span class="lbl">H1 · 32/720</span><span style="font-size:30px;font-weight:720;letter-spacing:-.035em">给水管网设计</span></div>
+      <div class="type-row"><span class="lbl">H2 · 19/650</span><span style="font-size:19px;font-weight:650">节点流量计算</span></div>
+      <div class="type-row"><span class="lbl">正文 · 15/1.85</span><span style="font-size:15px">采用环状管网平差法逐环校核闭合差。</span></div>
+      <div class="type-row"><span class="lbl">次要 · 13</span><span style="font-size:13px;color:var(--text-2)">更新于 2 分钟前 · 佟雪</span></div>
+      <div class="type-row"><span class="lbl">等宽 · mono</span><span style="font-family:var(--mono);font-size:14px">q_mi = q_i × l_mi · H₁ = 46 m</span></div>
+    </div>
+  </section>
+
+  <!-- 令牌 -->
+  <section>
+    <div class="sh">圆角 / 阴影 / 间距 · TOKENS</div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div class="tk"><span class="k">圆角 sm</span><span class="v">6px</span><span class="demo"><span style="width:40px;height:24px;background:var(--hover);border:1px solid var(--border);border-radius:6px"></span></span></div>
+        <div class="tk"><span class="k">圆角 base</span><span class="v">8px</span><span class="demo"><span style="width:40px;height:24px;background:var(--hover);border:1px solid var(--border);border-radius:8px"></span></span></div>
+        <div class="tk"><span class="k">圆角 lg</span><span class="v">12px</span><span class="demo"><span style="width:40px;height:24px;background:var(--hover);border:1px solid var(--border);border-radius:12px"></span></span></div>
+      </div>
+      <div class="card">
+        <div class="tk"><span class="k">阴影 卡片</span><span class="v">subtle</span><span class="demo"><span style="width:40px;height:24px;background:#fff;border-radius:8px;box-shadow:var(--shadow)"></span></span></div>
+        <div class="tk"><span class="k">字体 无衬线</span><span class="v">system / Inter</span><span class="demo"></span></div>
+        <div class="tk"><span class="k">字体 等宽</span><span class="v">SF Mono</span><span class="demo"></span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 基础组件 -->
+  <section>
+    <div class="sh">基础组件 · COMPONENTS</div>
+    <div class="grid cols-2">
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">按钮 Buttons</div>
+        <div class="row"><button class="btn primary">主按钮</button><button class="btn">次按钮</button><button class="btn ghost">幽灵</button><button class="btn primary sm">小号</button></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">徽章 Badges / Chips</div>
+        <div class="row"><span class="badge">默认</span><span class="badge blue">给水</span><span class="badge green">已交付</span><span class="badge amber">评审中</span><span class="badge red">告警</span><span class="badge violet">洞察</span></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">输入 Input</div>
+        <div class="ipt"><input value="0.9"><span class="u">m/s</span></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">开关 Switch</div>
+        <div class="row"><span class="switch on"></span><span style="font-size:12.5px;color:var(--text-2)">开启</span><span class="switch"></span><span style="font-size:12.5px;color:var(--text-2)">关闭</span></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">分段控件 Segmented</div>
+        <div class="seg"><button class="on">卡片</button><button>列表</button></div>
+      </div>
+      <div class="card">
+        <div style="font-size:12px;color:var(--text-3);margin-bottom:12px">状态 / 进度</div>
+        <div class="row" style="gap:18px">
+          <span class="stat" style="color:var(--green)"><span class="dot" style="background:currentColor"></span>计算中</span>
+          <span class="stat" style="color:var(--amber)"><span class="dot" style="background:currentColor"></span>等待中</span>
+          <span class="bar"><i style="width:62%"></i></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 复合组件 -->
+  <section>
+    <div class="sh">复合组件 · PATTERNS</div>
+    <div class="grid cols-3">
+      <div class="pcard">
+        <div class="pt"><span class="dot" style="background:var(--green)"></span><span class="ago">20 小时前</span><span class="av">佟</span></div>
+        <h3>给水管网设计</h3>
+        <div class="desc">节点水压校核待复核</div>
+        <div class="pf"><div class="arow">权限：<b style="color:var(--text)">计算</b><span class="pct">62%</span></div><span class="bar" style="width:100%"><i style="width:62%"></i></span></div>
+      </div>
+      <div class="menu">
+        <div class="mi">重命名</div>
+        <div class="mi">复制</div>
+        <div class="mi">归档</div>
+        <div class="mi-sep"></div>
+        <div class="mi danger">删除</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:flex-start">
+        <div class="toast"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#6ee7a8" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>已修复核心错误</div>
+        <span class="badge blue" style="padding:4px 10px">F50001</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 行内标注 -->
+  <section>
+    <div class="sh">行内标注体系 · INLINE MARKS（核心）</div>
+    <div class="card">
+      <p class="demo-doc">设计采用 <span class="kw">时变化系数 K<sub>h</sub> ⌄</span> 换算最高时流量；其中 <span class="term">q<sub>mi</sub></span> 为沿线流量。当前 <span class="flag-c">H₁ = 35 m</span> 偏低存在核心错误；水泵初选 <span class="flag-i">CK100/20 H 泵</span> 建议结合成本比选。</p>
+      <div class="legend">
+        <span><b class="kw">国标</b>蓝实线 · 点击就地展开计算（越界报警+溯源）</span>
+        <span><b class="term">术语</b>蓝虚线 · 悬停看释义</span>
+        <span><b class="flag-c">核心错误</b>红波浪 · 点击看连带依赖+一键修复</span>
+        <span><b class="flag-i">行业洞察</b>紫波浪 · 点击看设备推荐</span>
+      </div>
+      <div class="note">完整交互见最终原型 <a href="Water-Calculator-PRD.html" style="color:var(--blue-fg)">Water-Calculator-PRD.html</a>。</div>
+    </div>
+  </section>
+
+  <div style="margin-top:48px;padding-top:22px;border-top:1px solid var(--border);font-size:12px;color:var(--text-3)">
+    Water Calculator · 设计系统 · 与最终原型 Water-Calculator-PRD.html、PRD-01-Water-Calculator.md 配套。
+  </div>
+</div>
+</body>
+</html>

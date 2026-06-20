@@ -11,12 +11,9 @@
 
 | 文件 | 说明 |
 |---|---|
-| `index.html` | 着陆页（Pages 首页），汇总全部原型与文档 |
-| `Water-Calculator-PRD.html` | **最终版原型**：全中文、全可交互、Notion 式文档工具栏 |
-| `Water-Calculator-Notion.html` | Notion 极简版 |
-| `Water-Calculator-Shadcn.html` | shadcn/ui 风格版 |
-| `Water-Calculator-Doc.html` | 统一文档式版 |
-| `Water-Calculator-Prototype.html` | 初版（工程蓝） |
+| `index.html` | 着陆页（Pages 首页） |
+| `Water-Calculator-PRD.html` | **最终版高保真原型**：全中文、全可交互、Notion 式文档工具栏 |
+| `design-system.html` | 设计系统 / 设计组件（设计令牌 + 核心组件 + 行内标注体系） |
 | `PRD-01-Water-Calculator.md` | 产品需求文档 PRD v2 |
 | `01-Water-Calculator.md` | 项目背景介绍 |
 | `产品说明-WaterCalculator原型.md` | 产品说明（补充） |
